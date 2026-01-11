@@ -10,9 +10,9 @@ const {
 const router = express.Router();
 
 router.post("/create", createPlayer);
-router.put("/progress/:id", updateProgress);
-router.put("/feedback/:id", submitFeedback);
-router.get("/:id", getPlayer);
+router.put("/progress/:playerId", updateProgress);
+router.put("/feedback/:playerId", submitFeedback);
+router.get("/:playerId", getPlayer);
 router.get("/leaderboard/around/:playerId", getLeaderboardAroundPlayer);
 
 module.exports = router;
