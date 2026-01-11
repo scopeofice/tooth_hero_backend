@@ -234,12 +234,20 @@ exports.submitFeedback = async (req, res) => {
 
   res.json(player);
 };
-
 exports.getPlayer = async (req, res) => {
-  const player = await Player.findById(req.params.playerId);
-  if (!player) return res.status(404).json({ error: "Player not found" });
+  const { playerId } = req.params;
+  const player = await Player.findOne({ playerId });
+  if (!player) {
+    return res.status(404).json({ error: "Player not found" });
+  }
   res.json(player);
 };
+
+// exports.getPlayer = async (req, res) => {
+//   const player = await Player.findById(req.params.playerId);
+//   if (!player) return res.status(404).json({ error: "Player not found" });
+//   res.json(player);
+// };
 exports.getLeaderboardAroundPlayer = async (req, res) => {
   const { playerId } = req.params;
   const range = parseInt(req.query.range) || 3;
