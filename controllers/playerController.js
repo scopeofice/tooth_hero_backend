@@ -184,64 +184,59 @@
 //   });
 // };
 
-
 const Player = require("../models/Player");
+const { v4: uuidv4 } = require("uuid");
 
 exports.createPlayer = async (req, res) => {
   try {
     const { name, age, gender } = req.body;
 
     const player = await Player.create({
+      playerId: uuidv4(),
       name,
       age,
       gender,
     });
 
-    res.status(201).json({ id: player._id });
+    res.status(201).json({ id: player.playerId });
   } catch (err) {
     res.status(500).json({ error: "Failed to create player" });
   }
 };
 exports.updateProgress = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { levelCompleted } = req.body;
+  const { playerId } = req.params;
+  const { levelCompleted } = req.body;
 
-    const player = await Player.findById(id);
-    if (!player) return res.status(404).json({ error: "Player not found" });
+  const player = await Player.findOne({ playerId });
+  if (!player) return res.status(404).json({ error: "Player not found" });
 
-    if (!player.levelsCompleted.includes(levelCompleted)) {
-      player.levelsCompleted.push(levelCompleted);
-      player.score += levelCompleted * 10;
-      player.currentLevel = levelCompleted + 1;
-    }
-
-    await player.save();
-    res.json(player);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to update progress" });
+  if (!player.levelsCompleted.includes(levelCompleted)) {
+    player.levelsCompleted.push(levelCompleted);
+    player.score += levelCompleted * 10;
+    player.currentLevel = levelCompleted + 1;
   }
+
+  await player.save();
+  res.json(player);
 };
+
 exports.submitFeedback = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { stars, text } = req.body;
+  const { playerId } = req.params;
+  const { stars, text } = req.body;
 
-    const player = await Player.findByIdAndUpdate(
-      id,
-      { feedback: { stars, text } },
-      { new: true }
-    );
+  const player = await Player.findOneAndUpdate(
+    { playerId },
+    { feedback: { stars, text } },
+    { new: true }
+  );
 
-    if (!player) return res.status(404).json({ error: "Player not found" });
+  if (!player) return res.status(404).json({ error: "Player not found" });
 
-    res.json(player);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to save feedback" });
-  }
+  res.json(player);
 };
+
 exports.getPlayer = async (req, res) => {
-  const player = await Player.findById(req.params.id);
+  const player = await Player.findById(req.params.playerId);
   if (!player) return res.status(404).json({ error: "Player not found" });
   res.json(player);
 };
@@ -249,23 +244,20 @@ exports.getLeaderboardAroundPlayer = async (req, res) => {
   const { playerId } = req.params;
   const range = parseInt(req.query.range) || 3;
 
-  const players = await Player.find()
-    .sort({
-      score: -1,
-      "levelsCompleted.length": -1,
-      createdAt: 1,
-    });
+  const players = await Player.find().sort({
+    score: -1,
+    createdAt: 1,
+  });
 
-  const index = players.findIndex(p => p._id.toString() === playerId);
-  if (index === -1)
-    return res.status(404).json({ error: "Player not found" });
+  const index = players.findIndex((p) => p.playerId === playerId);
+  if (index === -1) return res.status(404).json({ error: "Player not found" });
 
   const start = Math.max(0, index - range);
   const end = Math.min(players.length, index + range + 1);
 
   const sliced = players.slice(start, end).map((p, i) => ({
     rank: start + i + 1,
-    id: p._id,
+    playerId: p.playerId,
     name: p.name,
     score: p.score,
     levelsCleared: p.levelsCompleted.length,
@@ -276,16 +268,19 @@ exports.getLeaderboardAroundPlayer = async (req, res) => {
     players: sliced,
   });
 };
+
 exports.getTopPlayers = async (req, res) => {
   const players = await Player.find()
     .sort({ score: -1 })
     .limit(10)
     .select("name score levelsCompleted");
 
-  res.json(players.map((p, i) => ({
-    rank: i + 1,
-    name: p.name,
-    score: p.score,
-    levelsCleared: p.levelsCompleted.length,
-  })));
+  res.json(
+    players.map((p, i) => ({
+      rank: i + 1,
+      name: p.name,
+      score: p.score,
+      levelsCleared: p.levelsCompleted.length,
+    }))
+  );
 };

@@ -2,44 +2,50 @@ const mongoose = require("mongoose");
 
 const playerSchema = new mongoose.Schema(
   {
+    playerId: {
+      type: String,
+      unique: true,
+      index: true,
+      required: true,
+    },
     name: {
       type: String,
-      required: true
+      required: true,
     },
     age: {
       type: Number,
-      required: true
+      required: true,
     },
     gender: {
       type: String,
-      required: true
+      required: true,
     },
 
     currentLevel: {
       type: Number,
-      default: 1
+      default: 1,
     },
 
     levelsCompleted: {
       type: [Number],
-      default: []
+      default: [],
     },
 
     score: {
       type: Number,
-      default: 0
+      default: 0,
     },
 
     feedback: {
       stars: {
         type: Number,
         min: 1,
-        max: 5
+        max: 5,
       },
       text: {
-        type: String
-      }
-    }
+        type: String,
+      },
+    },
   },
   { timestamps: true }
 );
